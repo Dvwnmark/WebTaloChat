@@ -33,26 +33,6 @@ const SocketServer = (socket, io) => {
     socket.join(`${data.roomId}`);
     socket.emit("connect_room_conversation", { roomId: data.roomId });
   });
-  
-  socket.on("message_from_client", async (data) => {
-    console.log("Received message from client:", data); // In ra dữ liệu từ sự kiện "message_from_client"
-    await io.in(data.roomId).emit("broadcast_to_all_user_in_room", { ...data });
-    if (data?.type_message === "text_to_voice") {
-        socket.broadcast.to(data?.roomId).emit("auto_playing_audio", { voice: data?.message, roomId: data?.roomId, keyId: data?.key });
-    }
-});
-
-socket.on("message_from_client", async (data) => {
-  console.log("Received message from client:");
-  console.log("Message content:", data.message);
-  console.log("Message type:", data.type_message);
-  console.log("Room ID:", data.roomId);
-  
-  // Các thông tin khác liên quan đến tin nhắn
-
-  // Tiếp tục xử lý dữ liệu và gửi lại cho các client khác nếu cần
-});
-
 
   socket.on("message_from_client", async (data) => {
     await io.in(data.roomId).emit("broadcast_to_all_user_in_room", { ...data })
@@ -64,18 +44,12 @@ socket.on("message_from_client", async (data) => {
     io.in(data?.roomId).emit("auto_playing_audio", {voice: data?.message, roomId: data?.roomId, keyId: data?.key, sender: data?.sender});
   })
   socket.on("typing_from_client_on", (data) => {
-    console.log("Received typing event from client:", data);
     socket
       .broadcast
       .to(data.roomId)
       .emit("broadcast_to_all_user_in_room_typing", { data });
   });
-
-  
-
-  
   socket.on("typing_from_client_off", (data) => {
-    console.log("Received typing event from client:", data);
     socket
       .broadcast
       .to(data.roomId)
@@ -83,7 +57,6 @@ socket.on("message_from_client", async (data) => {
   });
   // recall message
   socket.on("recall_message", (data) => {
-    console.log("Received recall message event:", data);
     io.to(data.idConversation).emit("recall_message_server", {
       ...data,
       type: "text",
@@ -128,34 +101,27 @@ socket.on("message_from_client", async (data) => {
   })
 
   // send request make friends 
-  // để sau
   socket.on("send_request_friend", (data)=> {
-    
     io.emit("new_request_friend", {sender_user_id: data.sender_user_id, destination_user_id: data.destination_user_id})
-    console.log("Received request friend event:", data);
   })
 
   // new message notify
   socket.on("send_new_message", (data)=> {
-    console.log("Received new message event:", data);
     socket.broadcast.emit("send_new_message_from_server", {...data})
   })
 
   // newest message 
   socket.on("update_newest_message", (data)=> {
-    console.log("Received update newest message event:", data);
     conversationsCrl.updateLastUpdate(data.roomId, data.lastUpdate)
     io.emit("newest_message", {...data})
     socket.broadcast.emit("newest_message_sound", {...data})
   })
   // join self
   socket.on("join_room_self", (data)=> {
-    console.log("Received join room self event:", data);
     socket.join(data?.meId || "")
   })
 
   socket.on("update_profile_user", (data)=> {
-    console.log("Received update profile user event:", data);
     io.in(data?.meId).emit("update_profile_user_on", {data: data?.meId})
   })
 };
